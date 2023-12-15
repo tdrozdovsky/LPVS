@@ -1,0 +1,210 @@
+name: Upload Release Asset
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# jobs:
+#   # tagged-release:
+#   #   name: "Tagged Release"
+#   #   runs-on: "ubuntu-latest"
+
+#   #   steps:
+#   #     # ...
+#   #     - name: "Build & test"
+#   #       run: |
+#   #         echo "done!"
+
+#   #     - uses: "marvinpinto/action-automatic-releases@latest"
+#   #       with:
+#   #         repo_token: "${{ secrets.GITHUB_TOKEN }}"
+#   #         prerelease: false
+#   #         # files: |
+#   #         #   # LICENSE.txt
+#   #         #   *.jar
+
+jobs:
+  # This step builds our artifacts, uploads them to the workflow run, and
+  # outputs their digest.
+  build:
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+      version: ${{ steps.hash.outputs.version }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@d0651293c4a5a52e711f25b41b05b2212f385d28
+      - name: Set up JDK 11
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml -DskipTests
+
+      - name: Build artifacts
+        run: |
+          # These are some amazing artifacts.
+          # echo "foo" > artifact1
+          echo "bar" > artifact2
+          ls -la target/
+          
+      - name: Generate hashes
+        shell: bash
+        id: hash
+        run: |
+          # sha256sum generates sha256 hash for all artifacts.
+          # base64 -w0 encodes to base64 and outputs on a single line.
+          # sha256sum artifact1 artifact2 ... | base64 -w0
+          # echo "hashes=$(sha256sum artifact1 artifact2 | base64 -w0)" >> "$GITHUB_OUTPUT"
+          VERSION=${{ github.ref_name }}
+          # echo "version=${VERSION:1}" >> "$GITHUB_OUTPUT"
+          # echo "hashes=$(sha256sum target/lpvs-${{ steps.hash.outputs.version }}.jar | base64 -w0)" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=${VERSION:1}"
+            echo "hashes=$(sha256sum ./target/lpvs-${{ steps.hash.outputs.version }}.jar artifact2 | base64 -w0)"
+          } >> $GITHUB_OUTPUT
+
+
+      - name: Upload artifact1
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # tag=v3.1.0
+        with:
+          name: lpvs-${{ steps.hash.outputs.version }}.jar
+          path: target/lpvs-${{ steps.hash.outputs.version }}.jar
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload artifact2
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # tag=v3.1.0
+        with:
+          name: artifact2
+          path: artifact2
+          if-no-files-found: error
+          retention-days: 5
+
+  # This step calls the generic workflow to generate provenance.
+  provenance:
+    needs: [build]
+    # runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.9.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      # Upload provenance to a new release
+      upload-assets: true
+
+  # This step uploads our artifacts to the tagged GitHub release.
+  release:
+    needs: [build, provenance]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download artifact1
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v2.1.0
+        with:
+          name: lpvs-${{ needs.build.outputs.version }}.jar
+
+      - name: Download artifact2
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v2.1.0
+        with:
+          name: artifact2
+
+      - name: Upload assets
+        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5 # v0.1.14
+        with:
+          files: |
+            lpvs-${{ needs.build.outputs.version }}.jar
+            artifact2
+
+
+
+
+
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     outputs:
+#       artifacts: ${{ steps.build.outputs.artifacts }}
+#       hashes: ${{ steps.hash.outputs.hashes }}
+#       version:  ${{ steps.art_name.outputs.version }}
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3
+
+#       - name: Build using maven
+#         id: build
+#         run: |
+#           # Your normal build workflow targets here
+#           mvn clean package
+
+#           # Save the location of the maven output files for easier reference
+#           ARTIFACT_PATTERN=./target/$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)-$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)*.jar
+#           echo "artifact_pattern=$ARTIFACT_PATTERN" >> "$GITHUB_OUTPUT"
+
+#       - name: Generate subject
+#         id: hash
+#         run: |
+#           echo "hashes=$(sha256sum ${{ steps.build.outputs.artifact_pattern }} | base64 -w0)" >> "$GITHUB_OUTPUT"
+    
+#       - name: Get Artifact name
+#         id: art_name
+#         run: |
+#           VERSION=${{ github.ref_name }}
+#           echo "version=lpvs-${VERSION:1}.jar" >> "$GITHUB_OUTPUT"
+# #           # echo "version=${VERSION:1}" >> "$GITHUB_OUTPUT"
+# #           # echo "hashes=$(sha256sum target/lpvs-${{ steps.hash.outputs.version }}.jar | base64 -w0)" >> "$GITHUB_OUTPUT"
+# #           {
+# #             echo "version=${VERSION:1}"
+# #             echo "hashes=$(sha256sum target/lpvs-${{ steps.hash.outputs.version }}.jar | base64 -w0)"
+# #           } >> $GITHUB_OUTPUT
+
+#       - name: Upload build artifacts
+#         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # tag=v3
+#         with:
+#           name: ${{ steps.art_name.outputs.version }}
+#           path: ./target/${{ steps.art_name.outputs.version }}
+#           # ${{ steps.build.outputs.artifact_pattern }}
+#           if-no-files-found: error
+
+#   provenance:
+#     needs: [build]
+#     permissions:
+#       actions: read # To read the workflow path.
+#       id-token: write # To sign the provenance.
+#       contents: write # To add assets to a release.
+#     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.9.0
+#     with:
+#       base64-subjects: "${{ needs.build.outputs.hashes }}"
+#       upload-assets: true # Optional: Upload to a new release
+
+#   # This step uploads our artifacts to the tagged GitHub release.
+#   release:
+#     needs: [build, provenance]
+#     runs-on: ubuntu-latest
+#     if: startsWith(github.ref, 'refs/tags/')
+#     steps:
+#       - name: Download artifact1
+#         uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v2.1.0
+#         with:
+#           name: ${{ needs.build.outputs.version }}
+
+#       # - name: Download artifact2
+#       #   uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v2.1.0
+#       #   with:
+#       #     name: artifact2
+
+#       - name: Upload assets
+#         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5 # v0.1.14
+#         with:
+#           files: |
+#             ${{ needs.build.outputs.version }}
