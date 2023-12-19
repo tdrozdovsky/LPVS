@@ -9,11 +9,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # traditionally you would build your code here and generate an artifact
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
+
       - name: Create artifact
         run:  echo "onion, tomato, jalapeno, cilantro, lime, salt" > salsa.txt
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           path: salsa.txt
 
@@ -22,15 +27,20 @@ jobs:
     name: Generate build provenance
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
+
       - name: Download build artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@cbed621e49e4c01b044d60f6c80ea4ed6328b281 # v2.1.1
 
       - name: Generate provenance
-        uses: slsa-framework/github-actions-demo@v0.1
+        uses: slsa-framework/github-actions-demo@9474e92bbf825d5b4b46810fc9367dfc73429a2a # v0.1
         with:
           artifact_path: artifact/
 
       - name: Upload provenance
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
         with:
           path: build.provenance
