@@ -1,7 +1,7 @@
 PROJECT=lpvs
 PROJECT_GROUP_ID=com.lpvs
 PROJECT_ARTIFACT_ID=lpvs
-MAIN_REPOSITORY=https://github.com/samsung/lpvs
+MAIN_REPOSITORY=https://github.com/tdrozdovsky/lpvs
 MAVEN_ARGS="-Djavac.src.version=17 -Djavac.target.version=17 -Denforcer.skip=true -DskipTests -Dgpg.skip"
 
   # Move seed corpus and dictionary.
@@ -21,6 +21,25 @@ MAVEN_ARGS="-Djavac.src.version=17 -Djavac.target.version=17 -Denforcer.skip=tru
 
   for fuzzer in $(find $SRC -name '*Fuzzer.java'); do
     fuzzer_basename=$(basename -s .java $fuzzer)
+
+  #   echo "#!/bin/bash
+  #   # LLVMFuzzerTestOneInput comment for fuzzer detection by infrastructure.
+  #   this_dir=\$(dirname \"\$0\")
+  #   if [[ \"\$@\" =~ (^| )-runs=[0-9]+($| ) ]]; then
+  #     mem_settings='-Xmx1900m:-Xss900k'
+  #   else
+  #     mem_settings='-Xmx2048m:-Xss1024k'
+  #   fi
+  #   # JAVA_HOME=\"\$this_dir/open-jdk-17/\" \
+  #   LD_LIBRARY_PATH=\"\$this_dir/open-jdk-17/lib/server\":\$this_dir \
+  #   \$this_dir/jazzer_driver --agent_path=\$this_dir/jazzer_agent_deploy.jar \
+  #   --cp=$RUNTIME_CLASSPATH \
+  #   --target_class=com.lpvs.util.$fuzzer_basename \
+  #   --jvm_args=\"\$mem_settings\" \
+  #   --instrumentation_includes=\"com.**:org.**\" \
+  #   \$@" > $OUT/$fuzzer_basename
+  #     chmod u+x $OUT/$fuzzer_basename
+  # done
 
     # Create an execution wrapper for every fuzztarget
     echo "#!/bin/bash

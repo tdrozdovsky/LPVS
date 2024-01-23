@@ -1,8 +1,8 @@
-homepage: "https://github.com/samsung/lpvs"
+homepage: "https://github.com/tdrozdovsky/lpvs"
 language: jvm
 fuzzing_engines:
   - libfuzzer
-main_repo: "https://github.com/samsung/lpvs"
+main_repo: "https://github.com/tdrozdovsky/lpvs"
 sanitizers:
   - address
 vendor_ccs:

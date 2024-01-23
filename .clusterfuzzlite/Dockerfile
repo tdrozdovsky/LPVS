@@ -1,14 +1,16 @@
-FROM gcr.io/oss-fuzz-base/base-builder-jvm@sha256:0a35a200381bf7ebda008131f8b1b7f19fd9c1bba1cfbaa9e4068c124761ecfd
+FROM ghcr.io/tdrozdovsky/base-builder-jvm
 
-RUN curl -L https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.zip -o maven.zip && \
+RUN curl -L https://archive.apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.zip -o maven.zip && \
     unzip maven.zip -d $SRC/maven && \
     rm -rf maven.zip
 
-ENV MVN $SRC/maven/apache-maven-3.6.3/bin/mvn
+ENV MVN $SRC/maven/apache-maven-3.8.6/bin/mvn
+
+# RUN apt update && apt install -y openjdk-17-jdk
 
 RUN rm -rf $SRC/lpvs
 
-RUN git clone --depth 1 https://github.com/samsung/lpvs
+RUN git clone --depth 1 https://github.com/tdrozdovsky/lpvs
 
 COPY . $SRC
 

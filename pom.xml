@@ -9,7 +9,7 @@
     <name>LPVS</name>
     <version>1.4.0</version>
     <packaging>jar</packaging>
-    <url>https://github.com/Samsung/LPVS</url>
+    <url>https://github.com/tdrozdovsky/LPVS</url>
 
     <description>
         License Pre-Validation Service analyzes which open source components and licenses are used in every patch.
@@ -187,7 +187,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.3</version>
+                <version>3.8.1</version>
                 <configuration>
                     <overview>${basedir}/doc/overview.html</overview>
                     <doctitle>${project.name} ${project.version} API</doctitle>
@@ -200,7 +200,7 @@
     <repository>
       <id>github</id>
       <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/samsung/lpvs</url>
+      <url>https://maven.pkg.github.com/tdrozdovsky/lpvs</url>
     </repository>
   </distributionManagement>
 </project>
