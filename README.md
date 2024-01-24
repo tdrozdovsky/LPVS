@@ -23,6 +23,7 @@ We believe that LPVS will be an invaluable tool for maintaining the integrity of
 
 ## Features
 
+
 - License Scanners:
 
     LPVS integrates with the [SCANOSS](https://www.scanoss.com) license scanner, allowing for comprehensive license analysis of the project's components. SCANOSS helps to identify the licenses associated with the codebase, ensuring the compliance with open-source license requirements. By leveraging SCANOSS, LPVS provides accurate and up-to-date information on the licenses used in the project.
